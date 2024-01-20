@@ -1,17 +1,30 @@
 #include <Arduino.h>
-#include <IRremote.hpp>
 
+const int TriggerPin = 2;
+uint8_t triggerPulled = 0;
+uint8_t delayCounter = 0;
 
 void setup() {
   Serial.begin(9600);
-  IrReceiver.begin(12, DISABLE_LED_FEEDBACK);
-  // analogWrite(10, 180);
-  // TCA0.SINGLE.CTRLA = 0xFF;
+  pinMode(TriggerPin, INPUT_PULLUP);
 }
 
 void loop() {
-  if (IrReceiver.decode()) {
-    IrReceiver.printIRResultShort(&Serial);
-    IrReceiver.resume();
+  if (digitalRead(TriggerPin) == 0 && triggerPulled == 0) {
+    triggerPulled = 1;
+    delayCounter = 0;
+    analogWrite(10, 180);
+    TCA0.SINGLE.CTRLA = 0xFF;
+    Serial.write("Trigger pulled\n");
+  }
+
+  delayCounter = delayCounter + 1;
+  if (delayCounter == 50) {
+    analogWrite(10, 0);
+  }
+
+  if (delayCounter == 255) {
+    delayCounter = 0;
+    triggerPulled = 0;
   }
 }
