@@ -4,42 +4,23 @@
 //H bridge. We assume a 5V power supply. First in case of testing we are setting defalut speed. 
 
 //Arduino pins definition  connected to input H Bridge
-int enA = 3;
-int enB = 5;
-int IN1 = 4; //pin connected with motor A
-int IN2 = 2; //pin connected with motor A
-int IN3 = 7; //pin connected with motor B
-int IN4 = 6; //pin connected with motor B
+#define enA 3
+#define enB 5
+#define IN1 4 //pin connected with motor A
+#define IN2 2 //pin connected with motor A
+#define IN3 7 //pin connected with motor B
+#define IN4 6 //pin connected with motor B
 
-//We assume that:
-//left direction -> counter clockwise
-//right directon -> clockwise
+//pins for proximity sensor
+#define trigPin 12 //proximity sensor trigger pin
+#define echoPin 13 //proximity sensor echo pin
 
-void goRight(){
-  analogWrite(enA, 255);  
-  analogWrite(enB, 255);
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-    
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
-}
+uint8_t proxSensorLeft = 0;
+uint8_t proxSensorRight = 0;
+long currentMillis = 0;
+long prevMillis = 0;
+uint8_t chooseDirection = 3;
 
-void goLeft(){
-  analogWrite(enA, 255); 
-  analogWrite(enB, 255); 
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-      
-  digitalWrite(IN3, LOW);
-  digitalWrite(IN4, HIGH);
-
-}
-
-void stop(){
-  analogWrite(enA, 0); 
-  analogWrite(enB, 0); 
-}
 
 void setup() {
   //Set all pins to OUTPUT mode
@@ -49,17 +30,63 @@ void setup() {
   pinMode(enB, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
-
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  randomSeed(analogRead(0));
 }
 
 void loop() {
-  goLeft();
-  delay(2000);
-  stop();
-  delay(2000);
-  goRight();
-  delay(2000);
-  stop();
-  delay(2000);
+  chooseDirection = random(3);
+  switch (chooseDirection) {
+    case 0:
+
+  }
+}
+
+//We assume that:
+//left direction -> counter clockwise
+//right directon -> clockwise
+
+//helper functions definitions
+
+void stop(uint8_t t=100){
+  analogWrite(enA, 0); 
+  analogWrite(enB, 0);
+  while(currentMillis - prevMillis >= t) {
+    currentMillis = millis();
+  }
+  prevMillis = currentMillis;
+}
+
+void goRight(uint8_t t){
+  if (!proxSensorRight) {
+    analogWrite(enA, 255);  
+    analogWrite(enB, 255);
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+  }
   
+  while(currentMillis - prevMillis >= t && !proxSensorRight) {
+    currentMillis = millis();
+  }
+  prevMillis = currentMillis;
+  stop();
+}
+
+void goLeft(uint8_t t){
+  if (!proxSensorLeft) {
+    analogWrite(enA, 255); 
+    analogWrite(enB, 255); 
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, HIGH);
+  }
+  while(currentMillis - prevMillis >= t && !proxSensorLeft) {
+    currentMillis = millis();
+  }
+  prevMillis = currentMillis;
+  stop();
 }
