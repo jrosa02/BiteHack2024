@@ -20,7 +20,7 @@ void setup() {
 
 void loop() {
   //generate random number of steps
-  randSteps = random(-stepsPerRevolution, stepsPerRevolution);
+  randSteps = random(-2*stepsPerRevolution, 2*stepsPerRevolution);
   // generate random speed
   randSpeed = random(minSpeed, maxSpeed);
 	myStepper.setSpeed(randSpeed);
