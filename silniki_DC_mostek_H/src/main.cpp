@@ -28,6 +28,8 @@ long randTime = 0;
 
 //helper function for checking distance
 void checkDistance(int trigPin, int echoPin) {
+  proxSensorLeft = 0;
+  proxSensorRight = 0;
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
@@ -56,7 +58,7 @@ void stop(uint8_t t=100){
   currentMillis = millis();
   analogWrite(enA, 0); 
   analogWrite(enB, 0);
-  while(currentMillis - prevMillis >= t) {
+  while(currentMillis - prevMillis <= t) {
     currentMillis = millis();
   }
   prevMillis = currentMillis;
@@ -74,7 +76,7 @@ void goRight(uint8_t t){
     digitalWrite(IN4, LOW);
   }
   
-  while(currentMillis - prevMillis >= t && !proxSensorRight) {
+  while(currentMillis - prevMillis <= t && !proxSensorRight) {
     checkDistance(trigPinRight, echoPinRight);
     currentMillis = millis();
   }
@@ -93,7 +95,7 @@ void goLeft(uint8_t t){
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
   }
-  while(currentMillis - prevMillis >= t && !proxSensorLeft) {
+  while(currentMillis - prevMillis <= t && !proxSensorLeft) {
     checkDistance(trigPinLeft, echoPinLeft);
     currentMillis = millis();
   }
@@ -115,6 +117,7 @@ void setup() {
   pinMode(echoPinRight, INPUT);
   pinMode(echoPinLeft, INPUT);
   randomSeed(analogRead(0));
+  delay(10000);
 }
 
 void loop() {
