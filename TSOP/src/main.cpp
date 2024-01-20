@@ -11,7 +11,7 @@ void setup() {
 
 void loop() {
   if (IrReceiver.decode()) {
-    IrReceiver.printIRResultShort(&Serial);
+    Serial.write("a\n");
     IrReceiver.resume();
   }
 }
