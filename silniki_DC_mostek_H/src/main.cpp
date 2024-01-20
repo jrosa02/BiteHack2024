@@ -20,6 +20,7 @@ uint8_t proxSensorRight = 0;
 long currentMillis = 0;
 long prevMillis = 0;
 uint8_t chooseDirection = 3;
+long randTime = 0;
 
 
 void setup() {
@@ -37,9 +38,23 @@ void setup() {
 
 void loop() {
   chooseDirection = random(3);
+  randTime = random(2000);
   switch (chooseDirection) {
     case 0:
-
+      stop(randTime);
+      break;
+    case 1:
+      if (!proxSensorLeft) {
+        goLeft(randTime);
+      }
+      break;
+    case 2:
+      if (!proxSensorRight) {
+        goRight(randTime);
+      }
+      break;
+    default;
+      stop();
   }
 }
 
@@ -50,6 +65,7 @@ void loop() {
 //helper functions definitions
 
 void stop(uint8_t t=100){
+  currentMillis = millis();
   analogWrite(enA, 0); 
   analogWrite(enB, 0);
   while(currentMillis - prevMillis >= t) {
@@ -59,6 +75,7 @@ void stop(uint8_t t=100){
 }
 
 void goRight(uint8_t t){
+  currentMillis = millis();
   if (!proxSensorRight) {
     analogWrite(enA, 255);  
     analogWrite(enB, 255);
@@ -76,6 +93,7 @@ void goRight(uint8_t t){
 }
 
 void goLeft(uint8_t t){
+  currentMillis = millis();
   if (!proxSensorLeft) {
     analogWrite(enA, 255); 
     analogWrite(enB, 255); 
