@@ -2,7 +2,7 @@
 
 const int TriggerPin = 2;
 uint8_t triggerPulled = 0;
-uint8_t delayCounter = 0;
+uint32_t delayCounter = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -23,7 +23,7 @@ void loop() {
     analogWrite(10, 0);
   }
 
-  if (delayCounter == 255) {
+  if (delayCounter >= 200000) {
     delayCounter = 0;
     triggerPulled = 0;
   }
