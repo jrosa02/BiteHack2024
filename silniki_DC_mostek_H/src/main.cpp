@@ -150,6 +150,7 @@ void chooseDirection(void)
 
 void flashLEDs() {
   //turn red LEDs on, wait for two seconds, turn them off
+  stop();
   digitalWrite(A0, HIGH);
   digitalWrite(A1, HIGH);
   Serial.write("received!\n");
