@@ -35,7 +35,7 @@ bool end_flag;
 bool received;
 
 long stepCounter = 0;
-int8_t steps = 10;
+int8_t steps = 20;
 
 Stepper myStepper = Stepper(stepsPerRevolution, STEPPERIN1, STEPPERIN2, STEPPERIN3, STEPPERIN4);
 
@@ -126,7 +126,7 @@ int8_t getCommand(uint32_t time)
   return ret_command;
 }
 
-int32_t chooseDirection(void)
+void chooseDirection(void)
 {
 
   uint32_t current_time = millis();
@@ -145,7 +145,7 @@ int32_t chooseDirection(void)
     stop();
   } 
 
-  Serial.write("Setting direction \n\n");
+  //Serial.write("Setting direction \n\n");
 }
 
 void flashLEDs() {
@@ -169,7 +169,7 @@ void setup() {
   pinMode(RECEIVER, INPUT_PULLUP);
   Serial.begin(9600);
 
-  myStepper.setSpeed(40);
+  myStepper.setSpeed(10);
 
   end_flag = false;
   received = false;
@@ -191,12 +191,11 @@ void loop() {
     }
     
     myStepper.step(steps);
-    stepCounter++;
+    stepCounter += abs(steps);
     if (stepCounter >= stepsPerRevolution) {
       stepCounter = 0;
       steps *= -1;
     }
-
 
   }
   else
