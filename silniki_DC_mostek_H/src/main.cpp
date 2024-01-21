@@ -26,8 +26,6 @@
 
 //stepper
 const int stepsPerRevolution = 2038;
-const int minSpeed = 5;
-const int maxSpeed = 20;
 
 const int32_t command_table[] = {1000, -2000, 0, 1000, 0, 1500, -1000, 0,  -1000, 2000, -1000, 0, 1000, 0, -1000, 0, -1000, 1000, 0,\
                                 1000, 0, -2000, 0, 1000, 1500, 0, -2000, 1000, 0 -1000, 1500, -1000, 2000, -1000, 0, 1000, 0, -1000,\
@@ -36,8 +34,8 @@ const int32_t command_table[] = {1000, -2000, 0, 1000, 0, 1500, -1000, 0,  -1000
 bool end_flag;
 bool received;
 
-long randSteps;
-long randSpeed;
+long stepCounter = 0;
+int8_t steps = 1;
 
 Stepper myStepper = Stepper(stepsPerRevolution, STEPPERIN1, STEPPERIN2, STEPPERIN3, STEPPERIN4);
 
@@ -168,7 +166,7 @@ void setup() {
   Serial.begin(9600);
   randomSeed(analogRead(0));
 
-  
+  myStepper.setSpeed(20);
 
   end_flag = false;
   received = false;
@@ -188,14 +186,16 @@ void loop() {
       flashLEDs();
       received = false;
     }
+    
+    Serial.write("a\n");
+    myStepper.step(steps);
+    stepCounter++;
+    if (stepCounter >= stepsPerRevolution) {
+      Serial.write("b\n");
+      stepCounter = 0;
+      steps *= -1;
+    }
 
-    //up-down stepper movement
-    //generate random number of steps
-    randSteps = random(-2*stepsPerRevolution, 2*stepsPerRevolution);
-    // generate random speed
-    randSpeed = random(minSpeed, maxSpeed);
-    myStepper.setSpeed(randSpeed);
-    myStepper.step(randSteps);
 
   }
   else
