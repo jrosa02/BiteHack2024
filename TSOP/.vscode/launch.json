@@ -11,7 +11,7 @@
       "cwd": "c:/Users/karol/Documents/BiteHack2024/TSOP/src",
       "program": "c:/Users/karol/Documents/BiteHack2024/TSOP/src/build/Debug/outDebug",
       "MIMode": "gdb",
-      "miDebuggerPath": "C:/Users/karol/.platformio/packages/toolchain-atmelavr/bin/avr-gdb.exe",
+      "miDebuggerPath": "gdb",
       "setupCommands": [
         {
           "description": "Enable pretty-printing for gdb",

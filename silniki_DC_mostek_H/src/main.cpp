@@ -1,5 +1,4 @@
 #include <Arduino.h>
-#include <IRremote.hpp>
 #include <stdint.h>
 
 //Section related to controlling both the speed and direction of rotation of the motors using
@@ -13,7 +12,7 @@
 #define IN3 7 //pin connected with motor B
 #define IN4 6 //pin connected with motor B
 
-#define TSOP 13 //pin used for input from TSOP
+#define RECEIVER 13 //pin used for input from TSOP
 
 #define STOPTIME 2000
 #define COMMAND_LENGHT 44
@@ -24,7 +23,7 @@ const int32_t command_table[] = {1000, -2000, 0, 1000, 0, 1500, -1000, 0,  -1000
 
 bool end_flag;
 
-bool tsop_received;
+bool received;
 
 //helper functions definitions
 //We assume that:
@@ -149,32 +148,29 @@ void setup() {
   pinMode(enB, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
-  pinMode(TSOP, INPUT);
+  pinMode(RECEIVER, INPUT_PULLUP);
   Serial.begin(9600);
   randomSeed(analogRead(0));
 
-  //initialize IR receiver
-  IrReceiver.begin(TSOP, DISABLE_LED_FEEDBACK);
+  
 
   end_flag = false;
-  tsop_received = false;
+  received = false;
 }
 
 void loop() {
-  tsop_received = false;
   //left-right movement 
   if (false == end_flag)
   {
     //chooseDirection();
-    //IR receiver
-    if (IrReceiver.decode()) {
-      tsop_received = true;
-      IrReceiver.resume();
+    //receiver
+    if (digitalRead(RECEIVER) == 0) {
+      received = true;
     }
 
-    if (tsop_received) {
+    if (received) {
       flashLEDs();
-      tsop_received = false;
+      received = false;
     }
   }
   else
