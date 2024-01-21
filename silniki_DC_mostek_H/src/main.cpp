@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <stdint.h>
 
 //Section related to controlling both the speed and direction of rotation of the motors using
 //H bridge. We assume a 5V power supply. First in case of testing we are setting defalut speed. 
@@ -7,102 +8,127 @@
 #define enA 3
 #define enB 5
 #define IN1 4 //pin connected with motor A
-#define IN2 2 //pin connected with motor A
+#define IN2 12 //pin connected with motor A
 #define IN3 7 //pin connected with motor B
 #define IN4 6 //pin connected with motor B
 
-//pins for proximity sensor
-#define trigPinLeft 12 //proximity sensor trigger pin
-#define trigPinRight 14
-#define echoPinLeft 13 //proximity sensor echo pin
-#define echoPinRight 15
+#define STOPTIME 2000
+#define COMMAND_LENGHT 44
 
-volatile uint8_t proxSensorLeft = 0;
-volatile uint8_t proxSensorRight = 0;
+const int32_t command_table[] = {1000, -2000, 0, 1000, 0, 1500, -1000, 0,  -1000, 2000, -1000, 0, 1000, 0, -1000, 0, -1000, 1000, 0,\
+                                1000, 0, -2000, 0, 1000, 1500, 0, -2000, 1000, 0 -1000, 1500, -1000, 2000, -1000, 0, 1000, 0, -1000,\
+                                 0, -1000, 1000, 0, 1000, -2000, 0};
 
-long currentMillis = 0;
-long prevMillis = 0;
-uint8_t chooseDirection = 3;
-long randTime = 0;
-
-
-//helper function for checking distance
-void checkDistance(int trigPin, int echoPin) {
-  proxSensorLeft = 0;
-  proxSensorRight = 0;
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(20);
-  digitalWrite(trigPin, LOW);
-
-  long time = pulseIn(echoPin, HIGH);
-  long dist = time/58;
-
-  if (dist < 5) {
-    if (trigPin == trigPinLeft) {
-      proxSensorLeft = 1;
-    }
-    else if (trigPin == trigPinRight) {
-      proxSensorRight = 1;
-    }
-  }
-}
+bool end_flag;
 
 //helper functions definitions
 //We assume that:
 //left direction -> counter clockwise
 //right directon -> clockwise
 
-void stop(uint8_t t=100){
-  currentMillis = millis();
+void stop(void){
   analogWrite(enA, 0); 
   analogWrite(enB, 0);
-  while(currentMillis - prevMillis <= t) {
-    currentMillis = millis();
-  }
-  prevMillis = currentMillis;
+  Serial.write("stop\n");
 }
 
-void goRight(uint8_t t){
-  currentMillis = millis();
-  checkDistance(trigPinRight, echoPinRight);
-  if (!proxSensorRight) {
+void goRight(void){
     analogWrite(enA, 255);  
     analogWrite(enB, 255);
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
-  }
-  
-  while(currentMillis - prevMillis <= t && !proxSensorRight) {
-    checkDistance(trigPinRight, echoPinRight);
-    currentMillis = millis();
-  }
-  prevMillis = currentMillis;
-  stop();
+    Serial.write("right\n");
 }
 
-void goLeft(uint8_t t){
-  currentMillis = millis();
-  checkDistance(trigPinLeft, echoPinLeft);
-  if (!proxSensorLeft) {
+void goLeft(void){
     analogWrite(enA, 255); 
     analogWrite(enB, 255); 
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, HIGH);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
-  }
-  while(currentMillis - prevMillis <= t && !proxSensorLeft) {
-    checkDistance(trigPinLeft, echoPinLeft);
-    currentMillis = millis();
-  }
-  prevMillis = currentMillis;
-  stop();
+    Serial.write("left\n");
 }
 
+int8_t decodeCommand(int32_t command)
+{
+  if (command < 0)
+  {
+    return -1;
+  }
+  else if (command > 0)
+  {
+    return 1;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+int8_t getCommand(uint32_t time)
+{
+  static uint8_t command_index = 0;
+  static int32_t command_sum = 0;
+  static int8_t ret_command = 0;
+
+  // Serial.write("\n");
+  // Serial.print(command_index);
+  // Serial.write("\n");
+  // Serial.print(time);
+  // Serial.write("\n");
+  // Serial.print(int32_t((int64_t)time - (command_sum + abs(command_table[command_index]))));
+  // Serial.write("\n");  
+
+  if((int64_t)time - (command_sum + abs(command_table[command_index])) > 0)
+  {//choose next move
+    command_sum += abs(command_table[command_index]);
+    ++command_index;
+    ret_command = decodeCommand(command_table[command_index]);
+
+    if (0 == ret_command) // implementing stop_time
+    {
+      command_sum += STOPTIME;
+    }
+    
+    Serial.write("Getting new command");
+  }
+  else
+  {
+    Serial.write("Old command");
+  }
+
+    if (command_index >= COMMAND_LENGHT)
+  {
+    end_flag = true;
+  }
+
+  return ret_command;
+}
+
+int32_t chooseDirection(void)
+{
+
+  uint32_t current_time = millis();
+  int8_t command = getCommand(current_time);
+
+  if (command < 0)
+  {
+    goRight();
+  }
+  else if (command > 0)
+  {
+    goLeft();
+  }
+  else
+  {
+    stop();
+  } 
+
+  Serial.write("Setting direction \n\n");
+}
 
 void setup() {
   //Set all pins to OUTPUT mode
@@ -112,34 +138,22 @@ void setup() {
   pinMode(enB, OUTPUT);
   pinMode(IN3, OUTPUT);
   pinMode(IN4, OUTPUT);
-  pinMode(trigPinRight, OUTPUT);
-  pinMode(trigPinLeft, OUTPUT);
-  pinMode(echoPinRight, INPUT);
-  pinMode(echoPinLeft, INPUT);
+  Serial.begin(9600);
   randomSeed(analogRead(0));
-  delay(10000);
+
+  end_flag = false;
 }
 
 void loop() {
-  chooseDirection = random(3);
-  randTime = random(2000);
-  switch (chooseDirection) {
-    case 0:
-      stop(randTime);
-      break;
-    case 1:
-      if (!proxSensorLeft) {
-        goLeft(randTime);
-      }
-      break;
-    case 2:
-      if (!proxSensorRight) {
-        goRight(randTime);
-      }
-      break;
-    default:
-      stop();
+  if (false == end_flag)
+  {
+    chooseDirection();
   }
+  else
+  {
+    Serial.print("END\nEND\nEND");
+  }
+  
 }
 
 
