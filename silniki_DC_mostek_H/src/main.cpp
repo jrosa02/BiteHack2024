@@ -35,7 +35,7 @@ bool end_flag;
 bool received;
 
 long stepCounter = 0;
-int8_t steps = 1;
+int8_t steps = 10;
 
 Stepper myStepper = Stepper(stepsPerRevolution, STEPPERIN1, STEPPERIN2, STEPPERIN3, STEPPERIN4);
 
@@ -47,7 +47,7 @@ Stepper myStepper = Stepper(stepsPerRevolution, STEPPERIN1, STEPPERIN2, STEPPERI
 void stop(void){
   analogWrite(enA, 0); 
   analogWrite(enB, 0);
-  Serial.write("stop\n");
+  //Serial.write("stop\n");
 }
 
 void goRight(void){
@@ -57,7 +57,7 @@ void goRight(void){
     digitalWrite(IN2, LOW);
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
-    Serial.write("right\n");
+    //Serial.write("right\n");
 }
 
 void goLeft(void){
@@ -67,7 +67,7 @@ void goLeft(void){
     digitalWrite(IN2, HIGH);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
-    Serial.write("left\n");
+    //Serial.write("left\n");
 }
 
 int8_t decodeCommand(int32_t command)
@@ -111,11 +111,11 @@ int8_t getCommand(uint32_t time)
       command_sum += STOPTIME;
     }
     
-    Serial.write("Getting new command");
+    //Serial.write("Getting new command");
   }
   else
   {
-    Serial.write("Old command");
+    //Serial.write("Old command");
   }
 
     if (command_index >= COMMAND_LENGHT)
@@ -150,8 +150,12 @@ int32_t chooseDirection(void)
 
 void flashLEDs() {
   //turn red LEDs on, wait for two seconds, turn them off
+  digitalWrite(A0, HIGH);
+  digitalWrite(A1, HIGH);
   Serial.write("received!\n");
-  delay(200);
+  delay(1000);
+  digitalWrite(A0, LOW);
+  digitalWrite(A1, LOW);
 }
 
 void setup() {
@@ -164,9 +168,8 @@ void setup() {
   pinMode(IN4, OUTPUT);
   pinMode(RECEIVER, INPUT_PULLUP);
   Serial.begin(9600);
-  randomSeed(analogRead(0));
 
-  myStepper.setSpeed(20);
+  myStepper.setSpeed(40);
 
   end_flag = false;
   received = false;
@@ -176,7 +179,7 @@ void loop() {
   //left-right movement 
   if (false == end_flag)
   {
-    //chooseDirection();
+    chooseDirection();
     //receiver
     if (digitalRead(RECEIVER) == 0) {
       received = true;
@@ -187,11 +190,9 @@ void loop() {
       received = false;
     }
     
-    Serial.write("a\n");
     myStepper.step(steps);
     stepCounter++;
     if (stepCounter >= stepsPerRevolution) {
-      Serial.write("b\n");
       stepCounter = 0;
       steps *= -1;
     }
